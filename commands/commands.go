@@ -16,33 +16,32 @@ const (
 )
 
 type Command struct {
-	command int32
-	argnum  int32
-	args    []interface {
+	Command int32
+	Args    []interface {
 		Encode() []byte
 	}
 }
 
 func (s Command) Encode() (ret []byte) {
-	ret = make([]byte, 0, 12+(s.argnum*12))
+	ret = make([]byte, 0, 12+(len(s.Args)*12))
 	ret = binary.BigEndian.AppendUint32(ret, uint32(COMMAND))
-	ret = binary.BigEndian.AppendUint32(ret, uint32(s.command))
-	ret = binary.BigEndian.AppendUint32(ret, uint32(s.argnum))
-	for _, v := range s.args {
+	ret = binary.BigEndian.AppendUint32(ret, uint32(s.Command))
+	ret = binary.BigEndian.AppendUint32(ret, uint32(len(s.Args)))
+	for _, v := range s.Args {
 		ret = append(ret, v.Encode()...)
 	}
 	return
 }
 
 type Node struct {
-	freq uint32
-	time uint32
+	Freq uint32
+	Time uint32
 }
 
 func (s Node) Encode() (ret []byte) {
 	ret = make([]byte, 0, 12)
 	ret = binary.BigEndian.AppendUint32(ret, uint32(DATA))
-	ret = binary.BigEndian.AppendUint32(ret, s.freq)
-	ret = binary.BigEndian.AppendUint32(ret, s.time)
+	ret = binary.BigEndian.AppendUint32(ret, s.Freq)
+	ret = binary.BigEndian.AppendUint32(ret, s.Time)
 	return
 }
