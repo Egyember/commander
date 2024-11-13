@@ -5,11 +5,13 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"slices"
 	"strings"
 )
 
 
 var ADDRES = flag.String("i", "autodetect", "target ip addres")
+var cli = flag.Bool("c", false, "use cli interface")
 
 func getip() (string, error){
 	pc, err := net.ListenPacket("udp", ":40000")
@@ -17,25 +19,23 @@ func getip() (string, error){
 		return "", err
 	}
 	defer pc.Close()
-	buff := make([]byte, 32)
 	addres := ""
 	for {
+		buff := make([]byte, 10)
 		_, addr, err := pc.ReadFrom(buff)
 		if err != nil {
 			return "", err
 		}
-		if string(buff) == "Hello sir"{
+		if slices.Compare(buff, []byte{104, 101, 108, 108, 111, 32, 115, 105, 114, 0}) == 0{
 			parts := strings.Split(addr.String(), ":")
-			addres = parts[0]+"40001"
+			addres = parts[0]+":40001"
 			break
 		}
 	}
 	return addres, nil
 }
 
-
-func main() {
-	flag.Parse()
+func ConecttoDev() net.Conn{
 	addres := ""
 	var err error
 	if *ADDRES == "autodetect" {
@@ -54,25 +54,33 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	
+
+	return conn
+}
+
+func main() {
+	flag.Parse()
+	conn := ConecttoDev()
 	defer conn.Close() 
-	com := commands.Command{
-		Command: commands.PLAY,
+	if *cli {
+		com := commands.Command{
+			Command: commands.PLAY,
+		}
+		argnum := 0
+		fmt.Printf("enter argnum:")
+		fmt.Scanf("%d", &argnum)
+		if argnum<=0{
+			return
+		}
+		nodes := make([]commands.Node, argnum)
+		for k := range nodes{
+			fmt.Printf("enter args: (freq;time)\n")
+			fmt.Scanf("%d;%d\n", &nodes[k].Freq, &nodes[k].Time)
+		}
+		com.Args = make([]interface{Encode() []byte}, len(nodes))
+		for k := range nodes{
+			com.Args[k] = nodes[k]
+		}
+		conn.Write(com.Encode())
 	}
-	argnum := 0
-	fmt.Printf("enter argnum:")
-	fmt.Scanf("%d", &argnum)
-	if argnum<=0{
-		return
-	}
-	nodes := make([]commands.Node, argnum)
-	for k,_ := range nodes{
-		fmt.Printf("enter args: (freq;time)\n")
-		fmt.Scanf("%d;%d\n", &nodes[k].Freq, &nodes[k].Time)
-	}
-	com.Args = make([]interface{Encode() []byte}, len(nodes))
-	for k := range nodes{
-		com.Args[k] = nodes[k]
-	}
-	conn.Write(com.Encode())
 }
