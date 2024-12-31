@@ -2,6 +2,7 @@ package main
 
 import (
 	"espcommander/commands"
+	"espcommander/webgui"
 	"flag"
 	"fmt"
 	"net"
@@ -39,6 +40,7 @@ func ConecttoDev() net.Conn{
 	addres := ""
 	var err error
 	if *ADDRES == "autodetect" {
+		fmt.Println("searching")
 		addres, err = getip()
 		if err != nil {
 			panic(err)
@@ -60,9 +62,11 @@ func ConecttoDev() net.Conn{
 
 func main() {
 	flag.Parse()
+	fmt.Println("connecting")
 	conn := ConecttoDev()
 	defer conn.Close() 
 	if *cli {
+		fmt.Println("cli")
 		com := commands.Command{
 			Command: commands.PLAY,
 		}
@@ -82,5 +86,7 @@ func main() {
 			com.Args[k] = nodes[k]
 		}
 		conn.Write(com.Encode())
+	} else {
+		webgui.Start(conn)
 	}
 }
